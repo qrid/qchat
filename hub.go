@@ -4,6 +4,10 @@
 
 package main
 
+import (
+	"encoding/json"
+)
+
 // Hub maintains the set of active clients and broadcasts messages to the
 // clients.
 type Hub struct {
@@ -34,10 +38,26 @@ func (h *Hub) run() {
 		select {
 		case client := <-h.register:
 			h.clients[client] = true
+			jsonMessage, _ := json.Marshal(
+				&Message{
+					Content: "/A new socket has connected. ", 
+					ServerIP: LocalIp(), 
+					SenderIP: client.conn.RemoteAddr().String(),
+				},
+			)
+			client.send <- jsonMessage
 		case client := <-h.unregister:
 			if _, ok := h.clients[client]; ok {
 				delete(h.clients, client)
 				close(client.send)
+				jsonMessage, _ := json.Marshal(
+					&Message{
+						Content: "/A socket has disconnected. ", 
+						ServerIP: LocalIp(), 
+						SenderIP: client.conn.RemoteAddr().String(),
+					},
+				)
+				client.send <- jsonMessage
 			}
 		case message := <-h.broadcast:
 			for client := range h.clients {

@@ -6,6 +6,7 @@ package main
 
 import (
 	"log"
+	"net"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -22,6 +23,19 @@ func serveHome(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	http.ServeFile(w, r, "home.html")
+}
+
+func LocalIp() string {
+	address, _ := net.InterfaceAddrs()
+	var ip = "localhost"
+	for _, address := range address {
+		if ipAddress, ok := address.(*net.IPNet); ok && !ipAddress.IP.IsLoopback() {
+			if ipAddress.IP.To4() != nil {
+				ip = ipAddress.IP.String()
+			}
+		}
+	}
+	return ip
 }
 
 func main() {
