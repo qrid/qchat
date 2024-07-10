@@ -5,12 +5,11 @@
 package main
 
 import (
-	"flag"
 	"log"
 	"net/http"
-)
 
-var addr = flag.String("addr", ":8080", "http service address")
+	"github.com/gin-gonic/gin"
+)
 
 func serveHome(w http.ResponseWriter, r *http.Request) {
 	log.Println(r.URL)
@@ -26,15 +25,24 @@ func serveHome(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	flag.Parse()
+	r := gin.Default()
 	hub := newHub()
 	go hub.run()
-	http.HandleFunc("/", serveHome)
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		serveWs(hub, w, r)
+	r.GET("/", func(c *gin.Context) {
+		serveHome(c.Writer, c.Request)
 	})
-	err := http.ListenAndServe(*addr, nil)
-	if err != nil {
-		log.Fatal("ListenAndServe: ", err)
-	}
+	r.GET("/ws", func(c *gin.Context) {
+		serveWs(hub, c.Writer, c.Request)
+	})
+	r.Run(":8080")
+	// hub := newHub()
+	// go hub.run()
+	// http.HandleFunc("/", serveHome)
+	// http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+	// 	serveWs(hub, w, r)
+	// })
+	// err := http.ListenAndServe(*addr, nil)
+	// if err != nil {
+	// 	log.Fatal("ListenAndServe: ", err)
+	// }
 }
